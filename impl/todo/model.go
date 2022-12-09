@@ -44,7 +44,7 @@ type GetByIDsReq struct {
 }
 
 type GetByIDsRes struct {
-	Data []GetByIDsData `json:"data"`
+	Data []*GetByIDsData `json:"data"`
 }
 
 type GetByIDsData struct {

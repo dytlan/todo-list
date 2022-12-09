@@ -14,7 +14,7 @@ var validMimeType = []string{"text/plain", "application/pdf"}
 func (ths *service) Upsert(c echo.Context) error {
 	var upsertReq UpsertReq
 	if err := functions.BindAndValidate(c, &upsertReq); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, err)
 	}
 	upsertSpec := accessor.UpsertSpec{
 		ID:          upsertReq.ID,
@@ -28,43 +28,31 @@ func (ths *service) Upsert(c echo.Context) error {
 	if upsertReq.File != "" {
 		bufferFile, fileInformation, err := file.ConstructBase64ToBuffer(upsertReq.File)
 		if err != nil {
-			return response.NewErrorResponseWithMessageAndData(c, http.StatusBadRequest, err.Error(), response.ErrorData{
-				Key:   "spec",
-				Value: upsertReq,
-			})
+			return c.JSON(http.StatusBadRequest, err)
 		}
 		if err = file.ValidateMimeType(fileInformation.MIMEType, validMimeType); err != nil {
-			return response.NewErrorResponseWithMessageAndData(c, http.StatusBadRequest, err.Error(), response.ErrorData{
-				Key:   "spec",
-				Value: upsertReq,
-			})
+			return c.JSON(http.StatusBadRequest, err)
 		}
 		if upsertSpec.ID != 0 {
 			todo, err := ths.accessor.GetByID(c, accessor.GetByIDSpec{
 				ID: upsertReq.ID,
 			})
 			if err != nil {
-				return err
+				return c.JSON(http.StatusBadRequest, err)
 			}
 			if err = ths.file.DeleteFile(todo.File); err != nil {
-				return err
+				return c.JSON(http.StatusBadRequest, err)
 			}
 		}
 		upsertSpec.File, err = ths.file.Base64Upload(bufferFile, fileInformation)
 		if err != nil {
-			return response.NewErrorResponseWithMessageAndData(c, http.StatusBadRequest, err.Error(), response.ErrorData{
-				Key:   "spec",
-				Value: upsertReq,
-			})
+			return c.JSON(http.StatusBadRequest, err)
 		}
 	}
 
 	res, err := ths.accessor.Upsert(c, upsertSpec)
 	if err != nil {
-		return response.NewErrorResponseWithMessageAndData(c, http.StatusBadRequest, err.Error(), response.ErrorData{
-			Key:   "spec",
-			Value: upsertReq,
-		})
+		return c.JSON(http.StatusBadRequest, err)
 	}
 
 	return response.NewSuccessResponse(c, UpsertRes{

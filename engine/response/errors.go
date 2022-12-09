@@ -25,11 +25,11 @@ func NewErrorResponseWithMessageAndData(c echo.Context, statusCode int, err stri
 	for _, d := range errorData {
 		data[d.Key] = d.Value
 	}
-	return c.JSON(statusCode, ErrorResponse{
+	return ErrorResponse{
 		StatusCode: statusCode,
 		Message:    err,
 		Data:       data,
-	})
+	}
 }
 
 func (ths ErrorResponse) Error() string {

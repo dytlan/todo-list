@@ -5,25 +5,26 @@ import (
 	"github.com/dytlan/moonlay-todo-list/impl/accessor"
 	"github.com/dytlan/moonlay-todo-list/impl/functions"
 	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
 func (ths *service) GetByIDs(c echo.Context) error {
 	var getByIDsReq GetByIDsReq
 	if err := functions.BindAndValidate(c, &getByIDsReq); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, err)
 	}
 	getByIDsRes, err := ths.accessor.GetByIDs(c, accessor.GetByIDsSpec{
 		IDs:    getByIDsReq.IDs,
 		Filter: getByIDsReq.Filter,
 	})
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, err)
 	}
 	res := newGetByIDsDataOutput(getByIDsRes)
 	return response.NewSuccessResponse(c, res)
 }
 
-func newGetByIDsDataOutput(data []accessor.ToDoDB) []*GetByIDsData {
+func newGetByIDsDataOutput(data []accessor.ToDoDB) GetByIDsRes {
 	result := make([]*GetByIDsData, 0)
 	for _, d := range data {
 		res := &GetByIDsData{
@@ -43,7 +44,10 @@ func newGetByIDsDataOutput(data []accessor.ToDoDB) []*GetByIDsData {
 			result = append(result, res)
 		}
 	}
-	return result
+
+	return GetByIDsRes{
+		Data: result,
+	}
 }
 
 func findByID(root *GetByIDsData, ID uint) *GetByIDsData {
